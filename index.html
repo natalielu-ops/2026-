@@ -2,8 +2,14 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>2026 七夕限定任務</title>
+<meta name="description" content="2026 七夕限定任務：一起看看我們的故事，然後把今年的七夕約好。">
+<meta name="theme-color" content="#241a3d">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:title" content="2026 七夕限定任務">
+<meta property="og:description" content="一起看看我們的故事，然後把今年的七夕約好。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;500;700&family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
@@ -11,18 +17,37 @@
 </head>
 <body>
 
+<!-- 全站閱讀進度：長篇捲動故事，讓人知道還有多少 -->
+<div id="scrollProgress" aria-hidden="true"><span id="scrollProgressBar"></span></div>
+
 <div id="cosmicDepth">
   <div id="cosmicImg"></div>
   <div id="cosmicTint"></div>
   <div id="cosmicStars"></div>
 </div>
 
-<!-- Spotify 官方嵌入播放器：永遠可見，不隱藏、不自製 UI。
-     「開始任務」按鈕會嘗試呼叫 play()，若被瀏覽器 autoplay 政策擋下，
-     這裡的播放器本身就有播放鍵，使用者可以直接按 -->
-<div class="spotify-widget">
-  <div class="sw-label">♫ 我們的歌</div>
-  <div id="spotify-embed-container"></div>
+<!-- 背景音樂：自製的 MP3 播放器（整首歌完整播放，不再是 Spotify 的 30 秒試聽）。
+     歌曲檔案與標題設定在 js/content.js 的 CONTENT.music。
+     預設收合成小藥丸，不遮擋內容；點「開始任務」或點藥丸本身會展開並開始播放。 -->
+<div class="music-widget is-collapsed" id="musicWidget">
+  <button type="button" class="mw-toggle" id="musicToggle" aria-expanded="false" aria-controls="musicPanel">
+    <span class="mw-note" aria-hidden="true">♫</span>
+    <span class="mw-text">我們的歌</span>
+    <span class="mw-caret" aria-hidden="true">▾</span>
+  </button>
+  <div class="mw-panel" id="musicPanel">
+    <div class="mw-row">
+      <button type="button" class="mw-play" id="musicPlay" aria-label="播放">▶</button>
+      <div class="mw-meta">
+        <div class="mw-title" id="musicTitle"></div>
+        <div class="mw-artist" id="musicArtist"></div>
+      </div>
+    </div>
+    <input type="range" class="mw-seek" id="musicSeek" min="0" max="1000" value="0" step="1" aria-label="播放進度" disabled>
+    <div class="mw-time"><span id="musicCurrent">0:00</span><span id="musicDuration">0:00</span></div>
+    <p class="mw-error" id="musicError" role="status" aria-live="polite" hidden></p>
+    <audio id="musicAudio" preload="metadata"></audio>
+  </div>
 </div>
 
 <!-- ============ SECTION 1: OPENING（全部置中） ============ -->
@@ -42,9 +67,9 @@
       <div>預估時間｜一個晚上</div>
       <div>必要條件｜你要出現</div>
     </div>
-    <button class="btn-primary" id="startBtn">【開始任務】</button>
+    <button class="btn-primary" id="startBtn" type="button">【開始任務】</button>
   </div>
-  <div class="scroll-hint"><span>↓</span> 往下滑動</div>
+  <div class="scroll-hint" aria-hidden="true"><span>↓</span> 往下滑動</div>
 </section>
 
 <!-- ============ SECTION 2: ABOUT US ============ -->
@@ -64,6 +89,7 @@
     <div class="title-lg">13 YEARS</div>
     <div class="title-lg">A LOT OF MEMORIES</div>
     <div class="sub reveal reveal-delay-2">AND STILL COUNTING.</div>
+    <p class="photo-hint reveal">點任何一張照片可以放大，放大後可以左右翻頁。</p>
     <div class="drag-hint" id="dragHint">
       <div class="dh-title">來，把我們的回憶攤開看看。</div>
       <div class="dh-sub">可以試著拖動照片喔 ✨</div>
@@ -78,10 +104,12 @@
     <div class="eyebrow reveal center" style="display:block;">COUPLE SURVIVAL TEST</div>
     <h2 class="title-lg center">❤️ 情侶生存能力測驗</h2>
     <p class="soft-line center reveal" style="margin:14px auto 0;">恭喜你們走到現在。<br>但長期交往是一門高難度學科。<br>現在開始進行測驗。</p>
-    <div class="quiz-progress" id="quizProgress"></div>
+    <div class="quiz-meta">
+      <div class="quiz-progress" id="quizProgress" role="presentation"></div>
+      <div class="quiz-count" id="quizCount" role="status" aria-live="polite"></div>
+    </div>
     <div id="quizArea"></div>
-    <div class="badges" id="badges"></div>
-    <div class="quiz-done-msg" id="quizDoneMsg" style="display:none;">恭喜你通過情侶生存測驗。</div>
+    <div class="badges" id="badges" aria-label="已取得的徽章"></div>
   </div>
 </section>
 
@@ -99,16 +127,24 @@
     <div class="eyebrow reveal center" style="display:block;">🌙 2026 七夕約會計畫</div>
     <h2 class="title-lg center">今年的七夕，要怎麼過？</h2>
     <p class="soft-line center reveal planner-sub">不用特別安排什麼大行程。<br>就想找一天，一起吃點喜歡的小東西、一起走走、聊聊天。<br><br>所以這次換你選。</p>
-    <h3 class="title-md center">🍽️ 晚餐吃什麼？</h3>
-    <div class="opt-grid" id="dinnerGrid"></div>
-    <div class="planner-response" id="dinnerResponse"></div>
+
+    <!-- 三個步驟一次看清楚，避免不知道還剩什麼要做 -->
+    <ol class="stepper" id="stepper">
+      <li data-step="dinner"><span class="sn">1</span><span class="st">晚餐</span></li>
+      <li data-step="activity"><span class="sn">2</span><span class="st">飯後</span></li>
+      <li data-step="confirm"><span class="sn">3</span><span class="st">確認</span></li>
+    </ol>
+
+    <h3 class="title-md center" id="dinnerHeading">🍽️ 晚餐吃什麼？</h3>
+    <div class="opt-grid" id="dinnerGrid" role="group" aria-labelledby="dinnerHeading"></div>
+    <div class="planner-response" id="dinnerResponse" role="status" aria-live="polite"></div>
   </div>
 
   <!-- SECTION 7 nested: activity after dinner -->
   <div class="wrap" id="activity">
-    <h3 class="title-md center" style="margin:50px 0 18px;">那吃完要做什麼？</h3>
-    <div class="opt-grid" id="activityGrid" style="grid-template-columns:1fr 1fr; max-width:420px;"></div>
-    <div class="planner-response" id="activityResponse"></div>
+    <h3 class="title-md center" id="activityHeading" style="margin:50px 0 18px;">那吃完要做什麼？</h3>
+    <div class="opt-grid" id="activityGrid" role="group" aria-labelledby="activityHeading" style="grid-template-columns:1fr 1fr; max-width:420px;"></div>
+    <div class="planner-response" id="activityResponse" role="status" aria-live="polite"></div>
   </div>
 </section>
 
@@ -118,12 +154,13 @@
     <div class="title-lg">✨ YOUR DATE PLAN</div>
     <div class="date-card" id="dateCard">
       <div class="dc-date" id="dcDate"></div>
-      <div class="date-row"><span>🍽️ 晚餐</span><span id="dcDinner">－</span></div>
-      <div class="date-row"><span>🌙 晚餐後</span><span id="dcActivity">－</span></div>
+      <div class="date-row"><span>🍽️ 晚餐</span><span id="dcDinner">尚未選擇</span></div>
+      <div class="date-row"><span>🌙 晚餐後</span><span id="dcActivity">尚未選擇</span></div>
       <div class="date-row" style="border-bottom:none;"><span>❤️ 約會對象</span><span id="dcWho"></span></div>
       <div class="date-note">完美。這份行程一經確認，恕不接受退貨。</div>
     </div>
-    <button class="btn-primary" id="confirmBtn">【確認約會 ❤️】</button>
+    <button class="btn-primary is-locked" id="confirmBtn" type="button" aria-describedby="confirmHint">【確認約會 ❤️】</button>
+    <p class="confirm-hint" id="confirmHint" role="status" aria-live="polite"></p>
   </div>
 </section>
 
@@ -131,22 +168,27 @@
 <section id="final">
   <div class="wrap">
     <div id="finalLines"></div>
-    <button class="final-btn" id="finalBtn">【約會任務：CONFIRMED ✓】</button>
+    <button class="final-btn" id="finalBtn" type="button">【還沒確認約會 ↑】</button>
     <div class="final-signoff reveal">下一個故事，我們繼續一起寫。</div>
   </div>
 </section>
 
-<div class="hearts-fx" id="heartsFx"></div>
+<div class="hearts-fx" id="heartsFx" aria-hidden="true"></div>
 
 <!-- photo lightbox -->
-<div class="lightbox" id="lightbox">
-  <div class="lightbox-inner">
-    <button class="lightbox-close" id="lightboxClose">✕</button>
-    <img id="lightboxImg" src="" alt="放大照片">
-  </div>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="照片檢視" aria-hidden="true">
+  <button class="lightbox-close" id="lightboxClose" type="button" aria-label="關閉照片">✕</button>
+  <button class="lb-nav lb-prev" id="lbPrev" type="button" aria-label="上一張照片">‹</button>
+  <button class="lb-nav lb-next" id="lbNext" type="button" aria-label="下一張照片">›</button>
+  <figure class="lightbox-inner">
+    <img id="lightboxImg" src="" alt="">
+    <figcaption class="lb-cap">
+      <span class="lb-title" id="lbTitle"></span>
+      <span class="lb-count" id="lbCount"></span>
+    </figcaption>
+  </figure>
 </div>
 <script src="js/content.js"></script>
 <script src="js/main.js"></script>
-<script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 </body>
 </html>

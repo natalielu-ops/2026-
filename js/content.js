@@ -7,7 +7,18 @@ const CONTENT = {
   boyfriendFull: "晉德大寶貝",
   girlfriendName: "美麗的女友大人",
   qixiDate: "2026.08.19",
-  spotifyTrackId: "0yWDm3hpwuIKJMtTKLzvlc",
+  dateWith: "我",           /* 約會方案卡片上的「約會對象」 */
+
+  /* 背景音樂：把 mp3 放進 audio/ 資料夾，然後在這裡填檔名即可。
+     src 也可以直接填一個完整網址（例如自己的雲端空間直連）。
+     整首歌會完整播放，播完自動從頭再來（loop: false 可關掉重複）。 */
+  music: {
+    src: "audio/our-song.mp3",
+    title: "我們的歌",
+    artist: "",
+    loop: true,
+    volume: 0.65,
+  },
 
   timeline: [
     { tag: "13 YEARS AGO", lines: ["高中", "那時候的我們，大概不會想到，這個認識了很久的人，最後會成為現在最熟悉的另一半。"] },
@@ -106,6 +117,6 @@ const IMAGES = [
 /* ============================================================
    PHOTO_LAYOUT —— 拍立得照片版面設定（可留空，使用預設散落角度）
    在編輯模式（?edit=1）用「儲存版面」匯出後，把內容貼在這裡取代，
-   重新部署到 Netlify 後，所有訪客看到的都會是你調整好的版面
+   重新部署後，所有訪客看到的都會是你調整好的版面
    ============================================================ */
 const PHOTO_LAYOUT = {};
